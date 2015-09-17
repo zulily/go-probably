@@ -85,6 +85,17 @@ func (s *StreamTop) Add(v string) {
 	}
 }
 
+// Add an item to the stream counter with the specified count.
+func (s *StreamTop) AddCount(v string, count uint32) {
+	newCount := s.sk.ConservativeAdd(v, count)
+	if newCount > s.thresh {
+		s.keys[v] = newCount
+	}
+	if len(s.keys) > s.maxItems {
+		s.trim()
+	}
+}
+
 // GetTop returns the top items from the stream
 func (s StreamTop) GetTop() []ItemCount {
 	ts := s.getTrimSlice()
