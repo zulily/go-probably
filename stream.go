@@ -1,6 +1,8 @@
 package probably
 
 import (
+	"bytes"
+	"encoding/gob"
 	"sort"
 )
 
@@ -124,4 +126,45 @@ func (s *StreamTop) Merge(from *StreamTop) {
 	if len(s.keys) > s.maxItems {
 		s.trim()
 	}
+}
+
+// GobEncode encodes a StreamTop instance into a gob
+func (s *StreamTop) GobEncode() ([]byte, error) {
+	buff := bytes.Buffer{}
+	enc := gob.NewEncoder(&buff)
+
+	if err := enc.Encode(s.thresh); err != nil {
+		return nil, err
+	}
+	if err := enc.Encode(s.trimTo); err != nil {
+		return nil, err
+	}
+	if err := enc.Encode(s.maxItems); err != nil {
+		return nil, err
+	}
+	if err := enc.Encode(s.keys); err != nil {
+		return nil, err
+	}
+
+	return buff.Bytes(), nil
+}
+
+// GobDecode decodes a StreamTop instance from a gob
+func (s *StreamTop) GobDecode(b []byte) error {
+	dec := gob.NewDecoder(bytes.NewBuffer(b))
+
+	if err := dec.Decode(&s.thresh); err != nil {
+		return err
+	}
+	if err := dec.Decode(&s.trimTo); err != nil {
+		return err
+	}
+	if err := dec.Decode(&s.maxItems); err != nil {
+		return err
+	}
+	if err := dec.Decode(&s.keys); err != nil {
+		return err
+	}
+
+	return nil
 }
