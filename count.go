@@ -1,6 +1,8 @@
 package probably
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"hash/fnv"
 	"math"
@@ -319,4 +321,34 @@ func (s *Sketch) Compress() {
 		}
 		s.sk[i] = row
 	}
+}
+
+// GobEncode encodes a Sketch instance into a gob
+func (s *Sketch) GobEncode() ([]byte, error) {
+	buff := bytes.Buffer{}
+	enc := gob.NewEncoder(&buff)
+
+	if err := enc.Encode(s.sk); err != nil {
+		return nil, err
+	}
+
+	if err := enc.Encode(s.rowCounts); err != nil {
+		return nil, err
+	}
+
+	return buff.Bytes(), nil
+}
+
+// GobDecode decodes a Sketch instance from a gob
+func (s *Sketch) GobDecode(byts []byte) error {
+	dec := gob.NewDecoder(bytes.NewBuffer(byts))
+	if err := dec.Decode(&s.sk); err != nil {
+		return err
+	}
+
+	if err := dec.Decode(&s.rowCounts); err != nil {
+		return err
+	}
+
+	return nil
 }

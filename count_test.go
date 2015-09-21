@@ -1,6 +1,9 @@
 package probably
 
 import (
+	"bytes"
+	"encoding/gob"
+	"reflect"
 	"testing"
 )
 
@@ -189,6 +192,44 @@ func TestMerging(t *testing.T) {
 		if s.Count(e.s) != e.v {
 			t.Fatalf("Expected %v for %v, got %v", e.v, e.s, s.Count(e.s))
 		}
+	}
+}
+
+func TestGob(t *testing.T) {
+	s := NewSketch(8, 3)
+	s2 := NewSketch(8, 3)
+
+	exp := []struct {
+		s     string
+		count int
+	}{
+		{"hello", 3},
+		{"there", 2},
+		{"world", 1},
+	}
+
+	for _, e := range exp {
+		for i := 0; i < e.count; i++ {
+			s.Increment(e.s)
+		}
+	}
+
+	buf := bytes.Buffer{}
+	if err := gob.NewEncoder(&buf).Encode(s); err != nil {
+		t.Error(err)
+	}
+	if err := gob.NewDecoder(&buf).Decode(&s2); err != nil {
+		t.Error(err)
+	}
+
+	for _, e := range exp {
+		if s.Count(e.s) != s2.Count(e.s) {
+			t.Errorf("counts differ for %q", e.s)
+		}
+	}
+
+	if !reflect.DeepEqual(s, s2) {
+		t.Error("unmarshaled structure differs")
 	}
 }
 
